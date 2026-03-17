@@ -1,0 +1,10 @@
+{
+  "cust_001": {
+    "name": "Test Customer",
+    "recipients": ["+37200000000"],
+    "templates": {
+      "ACTIVE": "fault_alert_v1",
+      "CLEARED": "fault_cleared_v1"
+    }
+  }
+}

@@ -1,31 +1,37 @@
 import { sendWhatsAppTemplateMessage } from "./whatsapp.js";
-
-const customerConfigs = {
-  cust_001: {
-    name: "Test Customer",
-    recipients: ["+37200000000"],
-    templates: {
-      ACTIVE: "fault_alert_v1",
-      CLEARED: "fault_cleared_v1"
-    }
-  }
-};
+import { getCustomerById } from "./customer-config.js";
+import { shouldSendAlert } from "./alert-state.js";
 
 export async function processAlert(alert) {
   const { customerId, machineId, faultCode, faultText, state } = alert;
 
-  const customer = customerConfigs[customerId];
+  const customer = await getCustomerById(customerId);
 
   if (!customer) {
     throw new Error(`Unknown customerId: ${customerId}`);
   }
 
+  const dedupeResult = await shouldSendAlert(alert);
+
+  if (!dedupeResult.shouldSend) {
+    return {
+      ok: true,
+      skipped: true,
+      reason: dedupeResult.reason,
+      customer: customer.name,
+      machineId,
+      faultCode,
+      state
+    };
+  }
+
   const templateName = customer.templates[state];
+
   if (!templateName) {
     throw new Error(`No template configured for state: ${state}`);
   }
 
-  const results = [];
+  const deliveries = [];
 
   for (const recipient of customer.recipients) {
     const result = await sendWhatsAppTemplateMessage({
@@ -34,7 +40,7 @@ export async function processAlert(alert) {
       parameters: [machineId, `${faultCode} ${faultText}`, state]
     });
 
-    results.push({
+    deliveries.push({
       recipient,
       result
     });
@@ -42,10 +48,11 @@ export async function processAlert(alert) {
 
   return {
     ok: true,
+    skipped: false,
     customer: customer.name,
     machineId,
     faultCode,
     state,
-    deliveries: results
+    deliveries
   };
 }

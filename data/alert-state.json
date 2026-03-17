@@ -1,0 +1,7 @@
+{
+  "cust_001::machine_07::E105": {
+    "status": "ACTIVE",
+    "updatedAt": "2026-03-17T10:53:01.399Z",
+    "faultText": "High Temperature"
+  }
+}
