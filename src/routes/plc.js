@@ -4,9 +4,15 @@ import { processAlert } from "../services/alerts.js";
 const router = express.Router();
 
 router.post("/plc-alert", async (req, res) => {
+  if (req.headers["x-api-key"] !== process.env.API_KEY) {
+    return res.status(401).json({
+      ok: false,
+      error: "Unauthorized"
+    });
+  }
+
   try {
     const { customerId, machineId, faultCode, faultText, state } = req.body;
-
     if (!customerId || !machineId || !faultCode || !faultText || !state) {
       return res.status(400).json({
         ok: false,
