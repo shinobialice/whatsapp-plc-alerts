@@ -21,6 +21,29 @@ app.listen(httpPort, () => {
   logger.info(`HTTP server running on port ${httpPort}`);
 });
 
+app.get("/test-notification", async (req, res) => {
+  if (req.headers["x-api-key"] !== process.env.API_KEY) {
+    return res.status(401).json({ ok: false, error: "Unauthorized" });
+  }
+
+  try {
+    const result = await processAlert({
+      customerId: "cust_001",
+      machineId: "test_machine",
+      faultCode: `TEST_${Date.now()}`,
+      faultText: "Manual test notification",
+      state: "ACTIVE"
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
 app.post("/test-notification", async (req, res) => {
   try {
     const result = await processAlert({
