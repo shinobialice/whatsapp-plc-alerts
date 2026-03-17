@@ -3,6 +3,7 @@ import express from "express";
 import plcRouter from "./routes/plc.js";
 import { logger } from "./utils/logger.js";
 import { startTcpServer } from "./services/tcp-server.js";
+import { processAlert } from "./services/alerts.js";
 
 const app = express();
 const httpPort = process.env.PORT || 3000;
@@ -18,6 +19,25 @@ app.use("/", plcRouter);
 
 app.listen(httpPort, () => {
   logger.info(`HTTP server running on port ${httpPort}`);
+});
+
+app.post("/test-notification", async (req, res) => {
+  try {
+    const result = await processAlert({
+      customerId: "cust_001",
+      machineId: "test_machine",
+      faultCode: `TEST_${Date.now()}`,
+      faultText: "Manual test notification",
+      state: "ACTIVE"
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
 });
 
 startTcpServer(Number(tcpPort));
